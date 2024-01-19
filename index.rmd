@@ -1,0 +1,20 @@
+---
+title: "Laboratorio di R"
+author: '[Andrea Boscarino](https://github.com/bosko22)'
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+source(here('R', 'librerie.R'))
+```
+# Istruzioni iniziali
+
+1.  Scaricare e installare i seguenti applicativi rispettando l'ordine d'installazione:
+
+    a.  R (<https://cran.r-project.org/>)
+
+    b.  Git (<https://git-scm.com/downloads>)
+
+    c.  RStudio (<https://posit.co/download/rstudio-desktop/>)
