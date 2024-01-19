@@ -1648,7 +1648,257 @@ l’ordine d’installazione:</p>
 <li><p>Git (<a href="https://git-scm.com/downloads" class="uri">https://git-scm.com/downloads</a>)</p></li>
 <li><p>RStudio (<a href="https://posit.co/download/rstudio-desktop/" class="uri">https://posit.co/download/rstudio-desktop/</a>)</p></li>
 </ol></li>
+<li><p>Creare un account personale su [GitHub] (<a href="https://github.com/" class="uri">https://github.com/</a>)</p></li>
+<li><p>Installare i seguenti pacchetti che saranno utilizzati nel corso,
+copiando e incollando nella consolle di R questa istruzione:</p></li>
 </ol>
+<pre class="r"><code>install.packages(c(&quot;tidyverse&quot;, &quot;readxl&quot;, &quot;here&quot;, &quot;janitor&quot;, &quot;openxlsx&quot;, &quot;gt&quot;, &quot;knit&quot;, &quot;rmarkdown&quot;))</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>Configurare il file .Rprofile</li>
+</ol>
+<p>Usando il seguente comando</p>
+<pre class="r"><code>file.edit(&quot;~/.Rprofile&quot;)</code></pre>
+<p>si aprirà il file .Rprofile in RStudio. Procedere copiando nel file
+le seguenti istruzioni</p>
+<pre class="r"><code>library(here)
+
+#funzione che carica pacchetti di default
+pkg &lt;- function(){
+  library(tidyverse)
+  library(readxl)
+  library(openxlsx)
+  library(gt)
+  library(janitor)
+}
+
+#funzione che inizializza un progetto
+rproj &lt;- function(){
+  dir.create(&quot;R&quot;)
+  dir.create(&quot;dati&quot;)
+  dir.create(&quot;report&quot;)
+  file.create(here(&quot;R&quot;, &quot;codici.R&quot;))
+  file.create(here(&quot;report&quot;, &quot;notebook.rmd&quot;))
+  fileConn&lt;-file(here(&quot;report&quot;,&quot;notebook.rmd&quot;))
+  writeLines(c(&quot;---&quot;,
+               &quot;title: &#39;R Notebook&#39;&quot;,
+               &quot;output: html_notebook&quot;,
+               &quot;---&quot;, 
+               &quot;&quot;,
+               
+               &quot;```{r}&quot;,
+               &quot;source(here(&#39;R&#39;, &#39;librerie.R&#39;))&quot;,
+               
+               &quot;```&quot;,
+
+               &quot;# CAPITOLO&quot;,
+               &quot;## Paragrafo&quot;,
+  
+               &quot;### Subparagrafo&quot;, 
+               
+               &quot;#### Subsubparagrafo&quot;), fileConn)
+  close(fileConn)
+  
+  file.create(here(&quot;R&quot;, &quot;librerie.R&quot;))
+  fileConn2&lt;-file(here(&quot;R&quot;,&quot;librerie.R&quot;))
+  writeLines(c(&quot;library(tidyverse)&quot;, 
+               &quot;library(openxlsx)&quot;, 
+               &quot;library(readxl)&quot;), fileConn2)
+  close(fileConn2)
+  
+  fileConn3 &lt;- file(here(&quot;R&quot;, &quot;codici.R&quot;))
+  writeLines(c(&quot;source(here(&#39;R&#39;, &#39;librerie.R&#39;))&quot;), fileConn3)
+  close(fileConn3)
+  
+}</code></pre>
+<p>Salvare e chiudere il file .Rprofile</p>
+<p>Ora R è configurato in modo che ogni volta sarà aperto richiamerà la
+libreria “here” e renderà disponibile nell’ambiente globale la funzione
+rproj.R che potrà essere utilizzata per inizializzare nuovi progetti,
+come descritto nel prossimo paragrafo.</p>
+<ol start="6" style="list-style-type: decimal">
+<li>Creare una cartella in Desktop denominata Rprogetti che ospiterà i
+progetti di R</li>
+</ol>
+<div id="inizializzare-un-nuovo-progetto" class="section level2">
+<h2>Inizializzare un nuovo progetto</h2>
+<p>I nuovi progetti vanno inizializzati dapprima nel repository github e
+poi clonati sul PC locale.</p>
+<p>Aprite il sito GitHub e accedete con login e pwd. Cliccate su “New
+Repository”. Proseguite dando un nome al repository seguendo i
+suggerimenti. Scrivete una piccola descrizione dei contenuti del
+progetto. Selezionate “Private” per rendere privato il contenuto del
+repository ( questa scelta influenzerà l’eventuale attività di scrittura
+collaborativa, ma potrà essere modificata anche in un secondo tempo a
+seconda delle necessità). Mettete la spunta su “ADD a Readme file”.
+Concludete l’operazione cliccando sul pulsante verde “Create
+repository”.</p>
+<p>A questo punto avete creato un contenitore vuoto che ospiterà in
+seguito i file del progetto di cui volete garantire il controllo delle
+versioni, il costante aggioranamento e una sicura archivazione nel
+cloud.</p>
+</div>
+<div id="clonare-il-progetto-dal-repository-di-github-nel-pc-locale" class="section level2">
+<h2>Clonare il progetto dal repository di GitHub nel PC locale</h2>
+<p>Copiate dalla barra degli indirizzi della pagina del nuovo repository
+l’indirizzo web che dovrebbe avere questa forma:</p>
+<p>https://github.com/Utente/Progetto.</p>
+<!-- [**https://github.com/Utente/Progetto**](https://github.com/Utente/Progetto){.uri}.  -->
+<p>Aprite RStudio e create un nuovo progetto utilizzando il comando New
+Project dal menu a tendina File. Scegliete l’opzione Version Control
+nella finestra di Dialogo dei nuovi progetti e quindi l’opzione Git.
+Incollate nella barra Repository URL l’indirizzo del repository del
+progetto precedentemente copiata. Nella barra Project directory name
+inserite il nome del Progetto e in Create project as subdirectory of:
+inserite il percorso della cartella Rprogetti presente nel desktop e che
+avete creato nel passo 6 delle istruzioni sopra. A questo punto cliccate
+il pulsante Create Project e R procederà a creare un nuova cartella in
+Rprogetti denominandola con il nome del progetto e all’interno clonerà i
+file presenti nel repository. Questa operazione si conclude con R che
+apre RStudio all’interno del nuovo progetto. Nel Pannello in basso a
+destra sotto la finestra file potrete visionare i file presenti nel
+progetto. In questa fase nella cartella del progetto non ci sono ancora
+le cartelle e i file tipici di un progetto R. Quindi eseguite la
+funzione rproj() semplicemnte scrivendo nella consolle di R l’istruzione
+rproj(). La funzione creerà nella cartella del progetto le seguenti
+cartelle:</p>
+<ul>
+<li><p>R che contiene il file codici.R in cui scrivere i codici di R, il
+file librerie.R con un elenco delle librerie di base da
+caricare</p></li>
+<li><p>dati vuota, che ospiterà i dati del progetto</p></li>
+<li><p>report che contiene il file notebook.rmd già con una
+configurazione di base per l’utilizzo come documento di reportistica dei
+risultati</p></li>
+</ul>
+</div>
+</div>
+<div id="programma-del-corso" class="section level1">
+<h1>Programma del corso</h1>
+<div id="incontro" class="section level2">
+<h2>1° Incontro</h2>
+<div id="r-rstudio-e-git" class="section level3">
+<h3>R, RSTUDIO e GIT</h3>
+<div id="argomenti-trattati" class="section level4">
+<h4>Argomenti trattati</h4>
+<ul>
+<li><p>Panoramica su R e sulle funzionalità di RSTUDIO e GIT</p></li>
+<li><p>Project in RStudio</p></li>
+<li><p>Pacchetti di R</p></li>
+<li><p>Concetti di base di R:</p>
+<pre><code>- R base;  
+
+- enviroment; 
+
+- oggetti;  
+
+- vettori; 
+
+- liste; 
+
+- dataframe;
+
+- tipi di dati (character, double, numeric, factor, integer); 
+
+- cenni di programmazione funzionale</code></pre></li>
+</ul>
+<p><img src="figure/RStudio.png" /></p>
+</div>
+</div>
+</div>
+<div id="incontro-1" class="section level2">
+<h2>2° Incontro</h2>
+<div id="gestione-manipolazione-dei-dati-data-wrangling" class="section level3">
+<h3>Gestione, manipolazione dei dati (data wrangling)</h3>
+<div id="introduzione-al-tidyverse" class="section level4">
+<h4>Introduzione al Tidyverse:</h4>
+<p><img src="figure/tidy.png" />
+<!-- Tidyverse è una raccolta di pacchetti open source per il linguaggio di programmazione R introdotto da Hadley Wickham e dal suo team che "condividono una filosofia di progettazione sottostante, una grammatica e strutture di dati"  ordinati o "tidy".  --></p>
+<!-- Tra principali pacchetti sono:  -->
+<!-- dplyr, ggplot2, tidyr, tibble, readr, forecats, purr, stringr, lubridate -->
+<!-- Il dettaglio dei singoli pacchetti, le funzionalità, le modalità d'uso sono ben descritte al sito di supporto del pacchetto a cui si rimanda (https://www.tidyverse.org/packages/) -->
+<!-- In questo corso introduttivo e per le attività legate alla manipolazione, pulizia, dei dataset useremo principalmente il pacchetto dplyr e alcune funzioni del pacchetto  lubridate che permette la gestione delle date.  -->
+<!-- **Tidy data** -->
+<!-- I dati ordinati sono un modo per descrivere i dati organizzati con una particolare struttura – una struttura rettangolare, in cui ogni variabile ha la propria colonna, e ogni osservazione ha la sua riga ( Wickham 2014 ). -->
+<!-- ![](figure/tidydata1.jpg) -->
+<!-- Questa struttura standard di dati ordinati ha portato Hadley Wickham a descriverlo nel modo in cui Leo Tolstoy descrive le famiglie. Leo dice “ Le famiglie felici sono tutte uguali; ogni famiglia infelice è infelice a modo suo ”. Allo stesso modo, Hadley afferma che “ i set di dati ordinati sono tutti uguali, ma ogni set di dati disordinato è a suo modo disordinato ”. -->
+<!-- ![](tidydata2.jpg) -->
+<!-- --- -->
+<!-- ### Principali funzioni (verbi) per la manipolazione dei dati -->
+<p><img src="figure/verbs.png" /></p>
+<!-- ## Titanic -->
+<!-- I dati contengono 12 variabili: numero di serie del passeggero ( PassengerId ), variabile di sopravvivenza del passeggero binario ( Survived ), classe di passeggeri (PClass ), nome (Name), genere ( , (Sex) età (Age), numero di fratelli e coniugi a bordo ( siblings and spouses on board ), numero di figli / genitori a bordo ( parent children on board ), numero di biglietto ( Tickett ), tariffa pagata (Fare), numero di cabina ( Cabin ) e lugo d'imbarco del passeggero ( Embarked). -->
+<!-- # dyplr -->
+<!-- ## Select -->
+<!-- Il comando select() permette di selezionare una o più variabili del dataframe. Per selezionare alcune colonne è sufficiente aggiungere i nomi delle variabili come argomenti di select. L’ordine in cui vengono aggiunti, determinerà l’ordine in cui verranno visualizzati nell’output. -->
+<!-- ## Mutate -->
+<!-- È possibile creare nuove colonne utilizzando quelle del dataframe con la funzione mutate(). Le opzioni utilizzabili all’interno dell’istruzione sono quasi infinite: praticamente tutto ciò che si può fare per i vettori, può essere fatto all’interno della funzione mutate(). Solitamente per una nuova colonna si utilizza un nuovo nome ma se viene utilizzato il nome di una colonna già esistente essa viene sostituita. -->
+<!-- ## Filter -->
+<!-- In molti casi non si vogliono includere tutte le righe nell’analisi, ma solo una selezione. La funzione filter() riduce le righe/osservazioni in base alle condizioni assegnate, La sintassi generale del filtro è: filter(dataset, condizione). È possibile filtrare le variabili numeriche in base ai rispettivi valori. Gli operatori più utilizzati per questo sono: -->
+<!-- 1 > (maggiore) -->
+<!-- 2 >= (maggiore uguale) -->
+<!-- 3 < (minore) -->
+<!-- 4 <= (minore uguale) -->
+<!-- 5 == (uguale) -->
+<!-- 6 != (diverso) -->
+<!-- Oppure per le variabile categoriche sono utilizzati i segni == o !=. Una o più condizioni possono essere usate contemporaneamente: -->
+<!-- filter(iris, Species == "virginica", Sepal.Width > 3.7) -->
+<!-- ## slice -->
+<!-- La funzione slice() consente di selezionare le righe tramite la loro posizione: -->
+<!-- slice(iris,8:12) -->
+<!-- ## summarize -->
+<!-- La funzione summarize() permette di calcolare funzioni statistiche riassuntive. Per utilizzare la funzione è sufficiente aggiungere il nome nuovo della colonna e, dopo il segno di uguale, la funzione matematica con cui vogliamo riassumere i dati column_name = funzione(variabile). È possibile aggiungere più funzioni di riepilogo all’interno dell’istruzione summarize(). -->
+<!-- Il codice seguente mostra il calcolo della funzione mean e sd in riferimento alla variabile Sepal.Length: -->
+<!-- summarize(iris, mean_sl = mean(Sepal.Length), sd_sl= sd(Sepal.Length )) -->
+<!-- La funzione viene utilizzata in successione al comando **group_by()** come verrà spiegato nella sezione split-apply-combine. -->
+<!-- ## Operatore PIPE: %>% -->
+<!-- L’operatore pipe, **%>%** permette di concatenare facilmente una sequenza di funzioni. Quando la pipe è presente tra due funzioni esempio: fun1() %>% fun2() questa sequenza può essere tradotta con esegui fun1() poi, con con output di fun1(), esegui fun2(). Tale comando è mostrato nella sezione successiva in cui group_by() e summarize() sono usati in successione. Per richiamare l’operatore pipe dalla tastiera è possibile utilizzare la shortcut di RStudio: Ctrl + Shift + M (Windows), Cmd + Shift + M (Mac). -->
+<!-- ## group_by  -->
+<!-- Molte delle attività di analisi dati possono essere affrontate utilizzando il paradigma “split-apply-combine”: dividere i dati in gruppi, applicare alcune analisi a ciascun gruppo e combinare i risultati in un nuovo data frame. -->
+<!-- Il pacchetto dplyr è stato scritto appositamente per ottimizzare le analisi di tipo Split-Apply-Combine. -->
+<!-- ![](sac.png) -->
+<!-- La funzione **group_by()** raggruppa i dati utilizzando i livelli di una variabile categorica ed è utilizzata insieme alla funzione summarize per fornire statistiche a riguardo i diversi gruppi. In questo esempio le funzioni sono concatenate con l’operatore %>%: -->
+<!-- ## arrange -->
+<!-- La funzione arrange() ordina le righe in modo crescente. Per ordinare in modo decrescente utilizzare la funzione desc() come mostrato nell’esempio: -->
+<!-- ## join -->
+<!-- Le funzioni join permettono di unire due tabelle tramite una o più  colonne in comune.  Quando si unisco due tabelle si definisce tabella di sinistra la prima tabella che viene codificata e tabella di destra la seconda. I nomi delle funzioni richiamano i respettivi comandi utilizzati in SQL. -->
+<!-- left_join() : estrae tutti i valori della tabella a sinistra anche se non hanno corrispondenza nella tabella a destra; -->
+<!-- right_join() estrae tutti i valori della tabella a destra anche se non hanno corrispondenza nella tabella di sinistra. -->
+<!-- inner_join(): il suo scopo è quello di unire due tabelle restituendo un risultato combinato sulla base di uno o più osservazioni che trovano corrispondenza in tutte le tabelle coinvolte nella join. Il comando corrispondente è -->
+<!-- full_join(): estrae tutte le righe delle due tabelle. -->
+<!-- --- -->
+</div>
+</div>
+</div>
+<div id="incontro-2" class="section level2">
+<h2>3° Incontro</h2>
+<div id="visualizzazione-dei-dati" class="section level3">
+<h3>Visualizzazione dei dati</h3>
+<div id="grafici---ggplot2" class="section level4">
+<h4>grafici - ggplot2</h4>
+<p><img src="figure/ggplot2.png" /></p>
+</div>
+<div id="tabelle---gt-flextable" class="section level4">
+<h4>tabelle - gt, flextable</h4>
+<p><img src="figure/gt.png" /> <img src="figure/flextable1.png" /> <img src="figure/flextable2.png" /></p>
+</div>
+</div>
+</div>
+<div id="incontro-3" class="section level2">
+<h2>4° Incontro</h2>
+<div id="statistica-con-r" class="section level3">
+<h3>Statistica con R</h3>
+<p><strong>I test statistici sono modelli lineari</strong></p>
+<p><img src="figure/pic1.png" /></p>
+</div>
+<div id="riproducibilità-della-ricerca-con-r" class="section level3">
+<h3>Riproducibilità della ricerca con R</h3>
+<ul>
+<li>reportistica con rmarkdown;</li>
+<li>controllo versioni e lavoro collaborativo con GIT</li>
+</ul>
+<p><img src="figure/rmark.png" /></p>
+</div>
+</div>
 </div>
 
 
