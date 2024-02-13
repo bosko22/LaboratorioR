@@ -1,310 +1,223 @@
 ---
 title: "Laboratorio di R"
-author: '[Andrea Boscarino](https://github.com/bosko22)'
+author: "[Andrea Boscarino](https://github.com/bosko22)"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+# mail: "yan.holtz.data@gmail.com"
+# linkedin: "yan-holtz-2477534a"
+# twitter: "r_graph_gallery"
+# github: "bosko22"
+# home: "www.yan-holtz.com"
+# !!! You need to provide a logo image here !!! Or just delete the field for no logo
+logo: "logo_gallery.png"
 output:
-  html_document:
-    df_print: paged
+  epuRate::epurate:
+    toc: TRUE
+    number_sections: FALSE
+    code_folding: "hide"
 ---
 
+<!-- # ```{r results="asis"} -->
+<!-- # cat(" -->
+<!-- # <style> -->
+<!-- # h1 { -->
+<!-- #    color: red; -->
+<!-- # } -->
+<!-- # </style> -->
+<!-- # ") -->
+<!-- # ``` -->
+
+<br><br>
+
+> Cominciamo caricando le *librerie* necessarie. [Tidyverse](https://www.tidyverse.org) raccoglie i pacchetti R maggiormente utilizzati nelle analisi dei dati quotidiane. Include pacchetti per l'importazione dei dati (**readr**), la visualizzazione dei dati (**ggplot2**), la manipolazione dei dati (**dplyr**, **tidyr**), la programmazione funzionale (**purrr**) e così via.
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(readxl)
+```
+
+# Get the data
+***
+Always start by loading *libraries*. The [tidyverse](https://www.tidyverse.org) is probably the package I use the most. Quite difficult to imagine analysing data without it. It is a good practice to load all the packages in the same time. It allows to know exactly what is needed to reproduce your analysis.
+```
+
+Then I explain what is my input data and I load it. Here is how it looks like:
 ```{r}
-source(here('R', 'librerie.R'))
-```
-# Istruzioni iniziali
-
-1.  Scaricare e installare i seguenti applicativi rispettando l'ordine d'installazione:
-
-    a.  R (<https://cran.r-project.org/>)
-
-    b.  Git (<https://git-scm.com/downloads>)
-
-    c.  RStudio (<https://posit.co/download/rstudio-desktop/>)
-
-2.  Creare un account personale su [GitHub] (<https://github.com/>)
-
-3.  Installare i seguenti pacchetti che saranno utilizzati nel corso, copiando e incollando nella consolle di R questa istruzione:
-
-```{r eval=FALSE}
-install.packages(c("tidyverse", "readxl", "here", "janitor", "openxlsx", "gt", "knit", "rmarkdown"))
-
+# Show it:
+mtcars %>% head(5)
 ```
 
-4.  Configurare il file .Rprofile
+This file has `r nrow(mtcars)` lines and `r ncol(mtcars)` columns. It is ready to be analysed.
 
-Usando il seguente comando 
-```{r eval=FALSE}
-file.edit("~/.Rprofile")
-```
-si aprirà il file .Rprofile in RStudio. Procedere copiando nel file le seguenti istruzioni
 
-```{r eval=FALSE}
-library(here)
 
-#funzione che carica pacchetti di default
-pkg <- function(){
-  library(tidyverse)
-  library(readxl)
-  library(openxlsx)
-  library(gt)
-  library(janitor)
-}
 
-#funzione che inizializza un progetto
-rproj <- function(){
-  dir.create("R")
-  dir.create("dati")
-  dir.create("report")
-  file.create(here("R", "codici.R"))
-  file.create(here("report", "notebook.rmd"))
-  fileConn<-file(here("report","notebook.rmd"))
-  writeLines(c("---",
-               "title: 'R Notebook'",
-               "output: html_notebook",
-               "---", 
-               "",
-               
-               "```{r}",
-               "source(here('R', 'librerie.R'))",
-               
-               "```",
 
-               "# CAPITOLO",
-               "## Paragrafo",
-  
-               "### Subparagrafo", 
-               
-               "#### Subsubparagrafo"), fileConn)
-  close(fileConn)
-  
-  file.create(here("R", "librerie.R"))
-  fileConn2<-file(here("R","librerie.R"))
-  writeLines(c("library(tidyverse)", 
-               "library(openxlsx)", 
-               "library(readxl)"), fileConn2)
-  close(fileConn2)
-  
-  fileConn3 <- file(here("R", "codici.R"))
-  writeLines(c("source(here('R', 'librerie.R'))"), fileConn3)
-  close(fileConn3)
-  
-}
+# A few analysis
+***
+Here are 3 version of a [circular barplot](https://www.r-graph-gallery.com/circular-barplot/) that you can find in the [R graph gallery](https://www.r-graph-gallery.com/circular-barplot/). Note that the figure is centered. You can change the size of the plot with **fig.width** and **fig.height**  
 
+## basic
+Let's start with a basic version of a circular representation of the data
+```{r, warning=FALSE, fig.align='center' }
+# Create dataset
+data=data.frame(
+  individual=paste( "Mister ", seq(1,60), sep=""),
+  value=sample( seq(10,100), 60, replace=T)
+)
+
+# Set a number of 'empty bar'
+empty_bar=10
+
+# Add lines to the initial dataset
+to_add = matrix(NA, empty_bar, ncol(data))
+colnames(to_add) = colnames(data)
+data=rbind(data, to_add)
+data$id=seq(1, nrow(data))
+
+# Get the name and the y position of each label
+label_data=data
+number_of_bar=nrow(label_data)
+angle= 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+label_data$hjust<-ifelse( angle < -90, 1, 0)
+label_data$angle<-ifelse(angle < -90, angle+180, angle)
+
+# Make the plot
+p = ggplot(data, aes(x=as.factor(id), y=value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  geom_bar(stat="identity", fill="#69b3a2") +
+  ylim(-100,120) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")
+  ) +
+  coord_polar(start = 0) +
+  geom_text(data=label_data, aes(x=id, y=value+10, label=individual, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label_data$angle, inherit.aes = FALSE )
+
+p
 ```
 
-Salvare e chiudere il file .Rprofile
 
-Ora R è configurato in modo che ogni volta sarà aperto richiamerà la libreria "here" e renderà disponibile nell'ambiente globale la funzione rproj.R che potrà essere utilizzata per inizializzare nuovi progetti, come descritto nel prossimo paragrafo.
+## grouped
+```{r, warning=FALSE, fig.align='center' }
+# Create dataset
+data=data.frame(
+  individual=paste( "Mister ", seq(1,60), sep=""),
+  group=c( rep('A', 10), rep('B', 30), rep('C', 14), rep('D', 6)) ,
+  value=sample( seq(10,100), 60, replace=T)
+)
+
+# Set a number of 'empty bar' to add at the end of each group
+empty_bar=4
+to_add = data.frame( matrix(NA, empty_bar*nlevels(data$group), ncol(data)) )
+colnames(to_add) = colnames(data)
+to_add$group=rep(levels(data$group), each=empty_bar)
+data=rbind(data, to_add)
+data=data %>% arrange(group)
+data$id=seq(1, nrow(data))
+
+# Get the name and the y position of each label
+label_data=data
+number_of_bar=nrow(label_data)
+angle= 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+label_data$hjust<-ifelse( angle < -90, 1, 0)
+label_data$angle<-ifelse(angle < -90, angle+180, angle)
+
+# Make the plot
+p = ggplot(data, aes(x=as.factor(id), y=value, fill=group)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  geom_bar(stat="identity", alpha=0.5) +
+  ylim(-100,120) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")
+  ) +
+  coord_polar() +
+  geom_text(data=label_data, aes(x=id, y=value+10, label=individual, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label_data$angle, inherit.aes = FALSE )
+
+p
+```
+
+## complex
+```{r, warning=FALSE, fig.align='center' }
+# Create dataset
+data=data.frame(
+  individual=paste( "Mister ", seq(1,60), sep=""),
+  group=c( rep('A', 10), rep('B', 30), rep('C', 14), rep('D', 6)) ,
+  value=sample( seq(10,100), 60, replace=T)
+)
+
+# Set a number of 'empty bar' to add at the end of each group
+empty_bar=3
+to_add = data.frame( matrix(NA, empty_bar*nlevels(data$group), ncol(data)) )
+colnames(to_add) = colnames(data)
+to_add$group=rep(levels(data$group), each=empty_bar)
+data=rbind(data, to_add)
+data=data %>% arrange(group)
+data$id=seq(1, nrow(data))
+
+# Get the name and the y position of each label
+label_data=data
+number_of_bar=nrow(label_data)
+angle= 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+label_data$hjust<-ifelse( angle < -90, 1, 0)
+label_data$angle<-ifelse(angle < -90, angle+180, angle)
+
+# prepare a data frame for base lines
+base_data=data %>%
+  group_by(group) %>%
+  summarize(start=min(id), end=max(id) - empty_bar) %>%
+  rowwise() %>%
+  mutate(title=mean(c(start, end)))
+
+# prepare a data frame for grid (scales)
+grid_data = base_data
+grid_data$end = grid_data$end[ c( nrow(grid_data), 1:nrow(grid_data)-1)] + 1
+grid_data$start = grid_data$start - 1
+grid_data=grid_data[-1,]
+
+# Make the plot
+p = ggplot(data, aes(x=as.factor(id), y=value, fill=group)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+
+  geom_bar(aes(x=as.factor(id), y=value, fill=group), stat="identity", alpha=0.5) +
+
+  # Add a val=100/75/50/25 lines. I do it at the beginning to make sur barplots are OVER it.
+  geom_segment(data=grid_data, aes(x = end, y = 80, xend = start, yend = 80), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 60, xend = start, yend = 60), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 40, xend = start, yend = 40), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 20, xend = start, yend = 20), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+
+  # Add text showing the value of each 100/75/50/25 lines
+  annotate("text", x = rep(max(data$id),4), y = c(20, 40, 60, 80), label = c("20", "40", "60", "80") , color="grey", size=3 , angle=0, fontface="bold", hjust=1) +
+
+  geom_bar(aes(x=as.factor(id), y=value, fill=group), stat="identity", alpha=0.5) +
+  ylim(-100,120) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")
+  ) +
+  coord_polar() +
+  geom_text(data=label_data, aes(x=id, y=value+10, label=individual, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label_data$angle, inherit.aes = FALSE ) +
 
-6.  Creare una cartella in Desktop denominata Rprogetti che ospiterà i progetti di R
+  # Add base line information
+  geom_segment(data=base_data, aes(x = start, y = -5, xend = end, yend = -5), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
+  geom_text(data=base_data, aes(x = title, y = -18, label=group), hjust=c(1,1,0,0), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
 
-## Inizializzare un nuovo progetto
+p
+```
 
-I nuovi progetti vanno inizializzati dapprima nel repository github e poi clonati sul PC locale.
 
-Aprite il sito GitHub e accedete con login e pwd. Cliccate su "New Repository". Proseguite dando un nome al repository seguendo i suggerimenti. Scrivete una piccola descrizione dei contenuti del progetto. Selezionate "Private" per rendere privato il contenuto del repository ( questa scelta influenzerà l'eventuale attività di scrittura collaborativa, ma potrà essere modificata anche in un secondo tempo a seconda delle necessità). Mettete la spunta su "ADD a Readme file". Concludete l'operazione cliccando sul pulsante verde "Create repository".
 
-A questo punto avete creato un contenitore vuoto che ospiterà in seguito i file del progetto di cui volete garantire il controllo delle versioni, il costante aggioranamento e una sicura archivazione nel cloud.
+# Conclusion
+***
+Read more about this template [here](https://github.com/holtzy/epuRate).
 
-## Clonare il progetto dal repository di GitHub nel PC locale
-
-Copiate dalla barra degli indirizzi della pagina del nuovo repository l'indirizzo web che dovrebbe avere questa forma:  
-
-https&#58;//github.com/Utente/Progetto.
- 
-
-<!-- [**https://github.com/Utente/Progetto**](https://github.com/Utente/Progetto){.uri}.  -->
-
-Aprite RStudio e create un nuovo progetto utilizzando il comando New Project dal menu a tendina File. Scegliete l'opzione Version Control nella finestra di Dialogo dei nuovi progetti e quindi l'opzione Git. Incollate nella barra Repository URL l'indirizzo del repository del progetto precedentemente copiata. Nella barra Project directory name inserite il nome del Progetto e in Create project as subdirectory of: inserite il percorso della cartella Rprogetti presente nel desktop e che avete creato nel passo 6 delle istruzioni sopra. A questo punto cliccate il pulsante Create Project e R procederà a creare un nuova cartella in Rprogetti denominandola con il nome del progetto e all'interno clonerà i file presenti nel repository. Questa operazione si conclude con R che apre RStudio all'interno del nuovo progetto. Nel Pannello in basso a destra sotto la finestra file potrete visionare i file presenti nel progetto. In questa fase nella cartella del progetto non ci sono ancora le cartelle e i file tipici di un progetto R. Quindi eseguite la funzione rproj() semplicemnte scrivendo nella consolle di R l'istruzione rproj(). La funzione creerà nella cartella del progetto le seguenti cartelle:
-
--   R che contiene il file codici.R in cui scrivere i codici di R, il file librerie.R con un elenco delle librerie di base da caricare
-
--   dati vuota, che ospiterà i dati del progetto
-
--   report che contiene il file notebook.rmd già con una configurazione di base per l'utilizzo come documento di reportistica dei risultati
-
-# Programma del corso
-
-## 1° Incontro  
-
-### R, RSTUDIO e GIT
- 
-#### Argomenti trattati 
-
--   Panoramica su R e sulle funzionalità di RSTUDIO e GIT
-
--   Project in RStudio
-
--   Pacchetti di R
-
--   Concetti di base di R:
-
-        - R base;  
-
-        - enviroment; 
-
-        - oggetti;  
-
-        - vettori; 
-
-        - liste; 
-
-        - dataframe;
-
-        - tipi di dati (character, double, numeric, factor, integer); 
-
-        - cenni di programmazione funzionale
-
-
-![](figure/RStudio.png) 
-
-
-## 2° Incontro
-
-### Gestione, manipolazione dei dati (data wrangling)
-
-#### Introduzione al Tidyverse:
-
-
-![](figure/tidy.png)
-<!-- Tidyverse è una raccolta di pacchetti open source per il linguaggio di programmazione R introdotto da Hadley Wickham e dal suo team che "condividono una filosofia di progettazione sottostante, una grammatica e strutture di dati"  ordinati o "tidy".  -->
-
-<!-- Tra principali pacchetti sono:  -->
-
-<!-- dplyr, ggplot2, tidyr, tibble, readr, forecats, purr, stringr, lubridate -->
-
-<!-- Il dettaglio dei singoli pacchetti, le funzionalità, le modalità d'uso sono ben descritte al sito di supporto del pacchetto a cui si rimanda (https://www.tidyverse.org/packages/) -->
-
-<!-- In questo corso introduttivo e per le attività legate alla manipolazione, pulizia, dei dataset useremo principalmente il pacchetto dplyr e alcune funzioni del pacchetto  lubridate che permette la gestione delle date.  -->
-
-
-<!-- **Tidy data** -->
-<!-- I dati ordinati sono un modo per descrivere i dati organizzati con una particolare struttura – una struttura rettangolare, in cui ogni variabile ha la propria colonna, e ogni osservazione ha la sua riga ( Wickham 2014 ). -->
-
-<!-- ![](figure/tidydata1.jpg) -->
-<!-- Questa struttura standard di dati ordinati ha portato Hadley Wickham a descriverlo nel modo in cui Leo Tolstoy descrive le famiglie. Leo dice “ Le famiglie felici sono tutte uguali; ogni famiglia infelice è infelice a modo suo ”. Allo stesso modo, Hadley afferma che “ i set di dati ordinati sono tutti uguali, ma ogni set di dati disordinato è a suo modo disordinato ”. -->
-
-<!-- ![](tidydata2.jpg) -->
-<!-- --- -->
-<!-- ### Principali funzioni (verbi) per la manipolazione dei dati -->
-
-
-![](figure/verbs.png)
-
-
-<!-- ## Titanic -->
-
-<!-- I dati contengono 12 variabili: numero di serie del passeggero ( PassengerId ), variabile di sopravvivenza del passeggero binario ( Survived ), classe di passeggeri (PClass ), nome (Name), genere ( , (Sex) età (Age), numero di fratelli e coniugi a bordo ( siblings and spouses on board ), numero di figli / genitori a bordo ( parent children on board ), numero di biglietto ( Tickett ), tariffa pagata (Fare), numero di cabina ( Cabin ) e lugo d'imbarco del passeggero ( Embarked). -->
-
-
-<!-- # dyplr -->
-
-<!-- ## Select -->
-<!-- Il comando select() permette di selezionare una o più variabili del dataframe. Per selezionare alcune colonne è sufficiente aggiungere i nomi delle variabili come argomenti di select. L’ordine in cui vengono aggiunti, determinerà l’ordine in cui verranno visualizzati nell’output. -->
-
-
-<!-- ## Mutate -->
-<!-- È possibile creare nuove colonne utilizzando quelle del dataframe con la funzione mutate(). Le opzioni utilizzabili all’interno dell’istruzione sono quasi infinite: praticamente tutto ciò che si può fare per i vettori, può essere fatto all’interno della funzione mutate(). Solitamente per una nuova colonna si utilizza un nuovo nome ma se viene utilizzato il nome di una colonna già esistente essa viene sostituita. -->
-
-
-<!-- ## Filter -->
-<!-- In molti casi non si vogliono includere tutte le righe nell’analisi, ma solo una selezione. La funzione filter() riduce le righe/osservazioni in base alle condizioni assegnate, La sintassi generale del filtro è: filter(dataset, condizione). È possibile filtrare le variabili numeriche in base ai rispettivi valori. Gli operatori più utilizzati per questo sono: -->
-
-<!-- 1 > (maggiore) -->
-
-<!-- 2 >= (maggiore uguale) -->
-
-<!-- 3 < (minore) -->
-
-<!-- 4 <= (minore uguale) -->
-
-<!-- 5 == (uguale) -->
-
-<!-- 6 != (diverso) -->
-
-<!-- Oppure per le variabile categoriche sono utilizzati i segni == o !=. Una o più condizioni possono essere usate contemporaneamente: -->
-
-<!-- filter(iris, Species == "virginica", Sepal.Width > 3.7) -->
-
-<!-- ## slice -->
-<!-- La funzione slice() consente di selezionare le righe tramite la loro posizione: -->
-
-<!-- slice(iris,8:12) -->
-
-<!-- ## summarize -->
-<!-- La funzione summarize() permette di calcolare funzioni statistiche riassuntive. Per utilizzare la funzione è sufficiente aggiungere il nome nuovo della colonna e, dopo il segno di uguale, la funzione matematica con cui vogliamo riassumere i dati column_name = funzione(variabile). È possibile aggiungere più funzioni di riepilogo all’interno dell’istruzione summarize(). -->
-
-<!-- Il codice seguente mostra il calcolo della funzione mean e sd in riferimento alla variabile Sepal.Length: -->
-
-<!-- summarize(iris, mean_sl = mean(Sepal.Length), sd_sl= sd(Sepal.Length )) -->
-
-<!-- La funzione viene utilizzata in successione al comando **group_by()** come verrà spiegato nella sezione split-apply-combine. -->
-
-<!-- ## Operatore PIPE: %>% -->
-
-<!-- L’operatore pipe, **%>%** permette di concatenare facilmente una sequenza di funzioni. Quando la pipe è presente tra due funzioni esempio: fun1() %>% fun2() questa sequenza può essere tradotta con esegui fun1() poi, con con output di fun1(), esegui fun2(). Tale comando è mostrato nella sezione successiva in cui group_by() e summarize() sono usati in successione. Per richiamare l’operatore pipe dalla tastiera è possibile utilizzare la shortcut di RStudio: Ctrl + Shift + M (Windows), Cmd + Shift + M (Mac). -->
-
-
-<!-- ## group_by  -->
-
-<!-- Molte delle attività di analisi dati possono essere affrontate utilizzando il paradigma “split-apply-combine”: dividere i dati in gruppi, applicare alcune analisi a ciascun gruppo e combinare i risultati in un nuovo data frame. -->
-
-<!-- Il pacchetto dplyr è stato scritto appositamente per ottimizzare le analisi di tipo Split-Apply-Combine. -->
-
-<!-- ![](sac.png) -->
-
-
-<!-- La funzione **group_by()** raggruppa i dati utilizzando i livelli di una variabile categorica ed è utilizzata insieme alla funzione summarize per fornire statistiche a riguardo i diversi gruppi. In questo esempio le funzioni sono concatenate con l’operatore %>%: -->
-
-
-<!-- ## arrange -->
-
-<!-- La funzione arrange() ordina le righe in modo crescente. Per ordinare in modo decrescente utilizzare la funzione desc() come mostrato nell’esempio: -->
-
-
-<!-- ## join -->
-
-<!-- Le funzioni join permettono di unire due tabelle tramite una o più  colonne in comune.  Quando si unisco due tabelle si definisce tabella di sinistra la prima tabella che viene codificata e tabella di destra la seconda. I nomi delle funzioni richiamano i respettivi comandi utilizzati in SQL. -->
-
-
-<!-- left_join() : estrae tutti i valori della tabella a sinistra anche se non hanno corrispondenza nella tabella a destra; -->
-
-<!-- right_join() estrae tutti i valori della tabella a destra anche se non hanno corrispondenza nella tabella di sinistra. -->
-
-<!-- inner_join(): il suo scopo è quello di unire due tabelle restituendo un risultato combinato sulla base di uno o più osservazioni che trovano corrispondenza in tutte le tabelle coinvolte nella join. Il comando corrispondente è -->
-
-<!-- full_join(): estrae tutte le righe delle due tabelle. -->
-
-
-
-
-<!-- --- -->
-
-
-## 3° Incontro
-
-### Visualizzazione dei dati
-
-#### grafici - ggplot2
-
-![](figure/ggplot2.png)
-
-#### tabelle - gt, flextable
-![](figure/gt.png)
-![](figure/flextable1.png)
-![](figure/flextable2.png)
-
-
-## 4° Incontro  
-
-### Statistica con R
-
-**I test statistici sono modelli lineari**
-
-![](figure/pic1.png)
-
-
-### Riproducibilità della ricerca con R
-
--   reportistica con rmarkdown;
--   controllo versioni e lavoro collaborativo con GIT
-
-![](figure/rmark.png)
+Learn how to custom your R Markdown document [here](https://holtzy.github.io/Pimp-my-rmd/).

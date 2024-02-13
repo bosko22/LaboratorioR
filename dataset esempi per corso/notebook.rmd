@@ -1,0 +1,254 @@
+---
+title: "REPORT DATI COVID 19"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  word_document: default
+---
+
+## ESERCIZIO 1:  DATASET COVID 19
+##### Usando i dati covid se avete tempo e voglia potete provare ad estrarre queste informazioni utilizzando le funzioni viste al corso:
+- PUNTO 1: numero di esami eseguiti per anno
+- PUNTO 2: numero di esami per reparto e anno
+- PUNTO 3: numero di esami per Provincia
+- PUNTO 4: numero di esami eseguiti con la prova SARS-CoV-2: agente eziologico per reparto e anno
+- PUNTO 5: numero di esami per prova e per anno
+- PUNTO 6: numero di esami per Materiale
+- PUNTO 7: numero dei differenti tipi di Materiale
+- PUNTO 8: numero di Comuni
+- PUNTO 9: numero di Conferenti
+- PUNTO 10: numero di esami eseguiti per anno e per conferente
+
+
+
+
+```{r setup, include=FALSE, echo=FALSE, warning=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+source(here('R', 'librerie.R'))
+
+
+```
+
+Per prima cosa dò un "colpo d'occhio" alla sua struttura del dataset e inizio a sistemare il nome delle variabili con "clean_names(df)".
+
+```{r echo=FALSE, warning=FALSE}
+
+df <- read.csv("C:\\Users\\massa\\OneDrive\\Documenti\\R\\0_CORSO_R_IZSLER_2023_Tranquillo\\Dati_covid_IZSLER\\data-2023-05-30.csv")
+
+# pulizia del dataset
+
+df<-clean_names(df)
+View(df)
+str(df)
+
+# Oppure 
+
+glimpse(df)
+
+```
+
+Facendo semplicemente "table(nome variabile)" ho visto degli errori nel tadaset che ho corretto così: 
+
+```{r  warning=FALSE}
+
+#Controllo facendo table(df$comune) ecc.. per tutte le variabili e Correggo errori nei dati
+#Sistemo i nomi distorti della variabile Comune: CantÃ¹; ForlÃ¬
+table(df$comune)
+df$comune= if_else(df$comune %in% "CantÃ¹", "Cantù", df$comune)
+df$comune= if_else(df$comune %in% "ForlÃ¬", "Forlì", df$comune)
+
+#se ho più nomi diversi da correggere uso C("","")
+#df$comune= if_else(df$comune %in% c("ForlÃ¬"), "Forlì", df$comune)
+
+#Provincia ND non esiste. Avevo provato a lasciare vuoto ma non si capisce bene l'output. Perciò metto 999
+table(df$provincia)
+df$provincia= if_else(df$provincia %in% "ND","999", df$provincia)
+table(df$provincia)
+
+```
+
+Correggo "errori" trovati nei dati e uniformo il carattere per avere un layout più ordinato nelle tabelle
+
+```{r  warning=FALSE}
+
+
+
+#Agente eziologico va accorpato? Penso di si. Poi chiedo... 
+#Agente eziologico (1311) e SARS-CoV-2: agente eziologico (58979) 
+
+df$prova= if_else(df$prova %in% c("Agente eziologico", 
+                                    "SARS-CoV-2: agente eziologico"), 
+                                        "SARS-CoV-2: agente eziologico", df$prova)
+
+# Sono da accorpare??? Chiedo. SARS-CoV-2: identificazione varianti (3897) e SARS-CoV-2: identificazione varianti N501Y (251)
+
+
+#Correggo Materiale
+
+df$materiale= if_else(df$materiale %in% c("TAMPOE","TAMPONI", "TAMPONE "), "TAMPONE", df$materiale)
+
+df$materiale= if_else(df$materiale %in% c("SALIVA","SALIVA "), "SALIVARI", df$materiale)
+
+df$materiale= if_else(df$materiale %in% "materiale vari", "ALTRI MATERIALI", df$materiale)
+
+                      
+#df$materiale= if_else(df$materiale %in% "TAMPONE" , "TAMPONE", df$materiale)
+
+# Sono da accorpare??? Chiedo. SARS-CoV-2: identificazione varianti (3897) e SARS-CoV-2: identificazione varianti N501Y (251)
+
+# Accorpo RNA (1) e RNA SARS-CoV-2 (645)_ Se non al massimo elimino riga
+df$materiale= if_else(df$materiale %in% "RNA", "RNA SARS-CoV-2", df$materiale)
+
+# Uniformo il carattere: tutto minuscolo con Prima lettera maiuscola "str_to_title()"
+df $ anno <- as.factor(df $ anno)
+df $ reparto <- as.factor(str_to_title(df $ reparto))
+df $ provincia <- as.factor(df $ provincia)
+df $ prova <- as.factor(str_to_title(df $ prova))
+df $ materiale <- factor(str_to_title(df $ materiale))
+df $ comune <- factor (str_to_title(df $ comune))
+df $ conferente <- factor (str_to_title(df $ conferente))
+
+```
+
+
+- PUNTO 1
+
+```{r echo=FALSE, warning=FALSE, results="asis"}
+
+df$anno<-factor(df$anno)
+kable(df %>%
+  group_by(anno) %>%
+  summarise(Numero_esami= sum(tot_eseguiti, na.rm=TRUE)))
+
+
+
+#verifico che i conti tornino
+kable(tot_eseguiti_somma_colonna<-sum(df$tot_eseguiti, na.rm=T))
+
+
+```
+
+
+- PUNTO 2
+
+```{r echo=FALSE, warning=FALSE, results="asis"}
+
+kable(df %>%
+  group_by(anno, reparto ) %>%
+  summarise(numero_esami = sum(tot_eseguiti, na.rm=TRUE)))
+
+```
+
+- PUNTO 3
+
+```{r echo=FALSE, warning=FALSE, results="asis"}
+
+kable(df %>%
+  group_by(provincia) %>%
+  summarise(Numero_esami = sum(tot_eseguiti, na.rm=TRUE)))
+
+```
+
+- PUNTO 4
+
+```{r echo=FALSE, warning=FALSE, results="asis"}
+
+kable(df %>%
+  group_by(anno, reparto, prova ) %>%
+  summarise(disp = sum(tot_eseguiti, na.rm=TRUE)))
+
+
+```
+
+- PUNTO 5
+
+```{r echo=FALSE, warning=FALSE, results="asis"}
+
+kable(df %>%
+  group_by(anno, prova ) %>%
+  summarise(Numero_esami = sum(tot_eseguiti, na.rm=TRUE)))
+
+```
+
+
+- PUNTO 6
+
+
+```{r echo=FALSE, warning=FALSE, results="asis"}
+
+kable(df %>%
+  group_by(materiale ) %>%
+  summarise(Numero_esami = sum(tot_eseguiti, na.rm=TRUE)))
+
+```
+
+- PUNTO 7
+
+
+```{r echo=FALSE, warning=FALSE, results="asis"}
+
+kable(df %>%
+  group_by(materiale) %>%
+  summarise(Numero_esami = sum(tot_eseguiti, na.rm=TRUE)), caption="Materiale VS totale eseguiti")
+
+kable(df %>% group_by(materiale, .drop = TRUE) %>% count(),caption="Totale per Materiale")
+
+# alternativa a 
+# table(df$materiale)
+
+
+
+```
+
+- PUNTO 8
+
+```{r echo=FALSE, warning=FALSE, results="asis"}
+# https://dplyr.tidyverse.org/reference/count.html
+
+kable(df %>%
+  group_by(comune) %>%
+   summarise(Numero_esami = sum(tot_eseguiti, na.rm=TRUE)))
+
+# Oppure
+
+#df %>% group_by(comune, .drop = TRUE) %>% count()
+
+# oppure
+
+#dplyr::count(df, comune)
+
+
+```
+
+- PUNTO 9  
+
+```{r echo=FALSE, warning=FALSE, results="asis"}
+
+kable(df %>%
+  group_by(conferente) %>%
+   summarise(Numero_esami = sum(tot_eseguiti, na.rm=TRUE)), caption = "Conferente VS tot_eseguiti")
+
+
+
+#kable(df %>% group_by(conferente, .drop = TRUE) %>% count())
+
+# oppure
+
+# dplyr::count(df, conferente)
+
+```
+
+
+- PUNTO 10 
+
+```{r echo=FALSE, warning=FALSE, results="asis"}
+
+
+kable(df %>%
+  group_by(conferente, anno) %>%
+  summarise(Numero_esami = sum(tot_eseguiti, na.rm=TRUE)),caption = "Conferente VS tot_eseguiti per anno")
+
+```
+
+
